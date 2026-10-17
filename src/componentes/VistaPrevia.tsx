@@ -5,7 +5,7 @@ const ANCHO = 816;
 const ALTO = 1056;
 
 /** Muestra la hoja escalada al espacio disponible. Al imprimir se quita la escala (ver styles.css). */
-export function VistaPrevia({ children }: { children: ReactNode }) {
+export function VistaPrevia({ children, onImprimir }: { children: ReactNode; onImprimir: () => void }) {
   const escenario = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(1);
 
@@ -25,7 +25,7 @@ export function VistaPrevia({ children }: { children: ReactNode }) {
         <p>
           <b>Vista previa, hoja carta.</b> Clic en un dato para corregirlo antes de imprimir.
         </p>
-        <button className="btn" onClick={() => window.print()}>
+        <button className="btn" onClick={onImprimir} title="Guarda la ficha y la imprime">
           Imprimir
         </button>
       </div>

@@ -52,6 +52,47 @@ select:disabled { opacity: .6 }
 .chip { display: inline-block; justify-self: start; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--rosa-claro); color: var(--rosa-osc) }
 .btn { font: 700 14px var(--f-body); background: var(--rosa); color: #fff; border: 0; border-radius: 6px; padding: 9px 20px; cursor: pointer }
 .btn:hover { background: var(--rosa-osc) }
+.btn:disabled { opacity: .45; cursor: default; background: var(--rosa) }
+.btn.sec-btn { background: var(--panel); color: var(--rosa-osc); border: 1px solid var(--rosa-claro) }
+.btn.sec-btn:hover { background: var(--rosa-tenue) }
+.btn.sec-btn:disabled { background: var(--panel) }
+.btn.chico { font-size: 12.5px; padding: 6px 11px }
+.btn.peligro { background: none; color: var(--muted); border: 1px solid var(--line) }
+.btn.peligro:hover { background: #C62828; border-color: #C62828; color: #fff }
+
+/* Navegación Ficha / Reportes */
+nav.vistas { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
+nav.vistas button { font: 700 13.5px var(--f-body); background: none; border: 0; border-radius: 99px; padding: 7px 18px; color: var(--muted); cursor: pointer; position: relative }
+nav.vistas button[aria-current="true"] { background: var(--rosa); color: #fff }
+.punto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 6px; vertical-align: 2px }
+.aviso-flot { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 10; background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-weight: 600; box-shadow: 0 6px 20px rgba(0, 0, 0, .2); max-width: calc(100vw - 32px) }
+
+/* Barra de guardar sobre las pestañas */
+.acciones { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line) }
+.acciones .estado { margin-right: auto; font-size: 12.5px; color: var(--muted) }
+.acciones .sin { color: var(--warn) }
+.acciones .ok { color: var(--ok); font-weight: 600 }
+.acciones .btn { padding: 7px 16px }
+
+/* Reportes */
+.reportes { max-width: 1320px; margin: 0 auto; padding: 16px; display: grid; gap: 12px }
+.rep-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; justify-content: space-between }
+.rep-top .busca { flex: 1 1 280px; max-width: 480px }
+.respaldo { display: flex; flex-wrap: wrap; gap: 8px }
+.error { color: #C62828; font-weight: 600; margin: 0 }
+.vacio { color: var(--muted); padding: 24px 0; text-align: center; margin: 0 }
+.tabla-rep { overflow-x: auto }
+.tabla-rep table { width: 100%; border-collapse: collapse; font-size: 13.5px }
+.tabla-rep th { text-align: left; font: 600 11px var(--f-body); text-transform: uppercase; letter-spacing: .06em; color: var(--rosa-osc); padding: 8px; border-bottom: 2px solid var(--rosa-claro); white-space: nowrap }
+.tabla-rep td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle }
+.tabla-rep td small { display: block; color: var(--muted); font-size: 12px }
+.tabla-rep td.num { font-variant-numeric: tabular-nums; white-space: nowrap }
+.tabla-rep td.acc { white-space: nowrap; text-align: right }
+.tabla-rep td.acc .btn + .btn { margin-left: 4px }
+.tabla-rep tr.abierta td { background: var(--rosa-tenue) }
+.cuenta { font-size: 12px; color: var(--muted); margin: 8px 0 0 }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0) }
+
 .viewer { min-width: 0 }
 .viewer .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px }
 .viewer .bar p { margin: 0; font-size: 12.5px; color: var(--muted) }
@@ -109,7 +150,7 @@ table.m tr:nth-child(even) td { background: #FDF6F9 }
 @page { size: letter; margin: 0 }
 @media print {
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 8.5in; height: 11in; overflow: hidden }
-  header.app, .panel, .viewer .bar { display: none !important }
+  header.app, .panel, .viewer .bar, .aviso-flot { display: none !important }
   .wrap, .viewer, .stage { display: block !important; margin: 0 !important; padding: 0 !important; background: none !important; border-radius: 0 !important; max-width: none !important }
   .scaler { transform: none !important; width: auto !important; height: auto !important }
   /* 1 px menos que la hoja para que el redondeo nunca empuje una segunda página en blanco */

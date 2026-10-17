@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { consumoDeTela, prendasPorLote, redondear2 } from "./calculo";
-import { fichaEjemplo, type Ficha } from "./datos/ficha";
+import { consumoDeTela, prendasPorLote, redondear2, type Consumo } from "./calculo";
+import { guardarFicha } from "./datos/db";
+import { fichaNueva, type Ficha } from "./datos/ficha";
+import type { Medidas } from "./datos/medidas";
 import { medidasEfectivas } from "./datos/tallas";
 import { Hoja } from "./componentes/Hoja";
+import { Reportes } from "./componentes/Reportes";
 import { TabClienta } from "./componentes/TabClienta";
 import { TabInsumos } from "./componentes/TabInsumos";
 import { TabMedidas } from "./componentes/TabMedidas";
@@ -16,27 +19,98 @@ const PESTANAS = [
   { id: "insumos", nombre: "Insumos" },
 ] as const;
 type Pestana = (typeof PESTANAS)[number]["id"];
+type Vista = "ficha" | "reportes";
 
 export type Actualizar = (cambio: (f: Ficha) => Ficha) => void;
 
+const hayMedidas = (M: Medidas) => Object.values(M).some((v) => v > 0);
+
+/** Sin medidas capturadas no se calcula consumo (si no, saldrían solo la pretina o el cuello). */
+function calcularConsumo(f: Ficha["tela"], M: Medidas): Consumo {
+  const c = consumoDeTela(f.prenda, f.manga, M, f.ancho, f.merma);
+  return hayMedidas(M) ? c : { ...c, renglones: [], totalCm: 0, metros: 0, noCabe: false };
+}
+
+const consumoDe = (f: Ficha) => calcularConsumo(f.tela, medidasEfectivas(f.tipoMedida, f.medidas));
+
+/** El consumo calculado se anota solo en la tela elegida (como en el prototipo). */
+function conConsumo(f: Ficha): Ficha {
+  const m = redondear2(consumoDe(f).metros);
+  return f.telas[f.tela.tela] === m ? f : { ...f, telas: { ...f.telas, [f.tela.tela]: m } };
+}
+
+const huella = (f: Ficha) => JSON.stringify(f);
+const SIN_GUARDAR = "Hay cambios sin guardar en la ficha abierta. ¿Quieres descartarlos?";
+
 export default function App() {
-  const [ficha, setFicha] = useState<Ficha>(fichaEjemplo);
+  const [ficha, setFicha] = useState<Ficha>(() => conConsumo(fichaNueva()));
+  // Cómo estaba la ficha al abrirla o guardarla; si cambia, hay algo sin guardar.
+  const [referencia, setReferencia] = useState(() => huella(ficha));
+  const [vista, setVista] = useState<Vista>("ficha");
   const [pestana, setPestana] = useState<Pestana>("clienta");
-  const actualizar: Actualizar = (cambio) => setFicha((f) => cambio(f));
+  const [aviso, setAviso] = useState("");
+  const [imprimirPendiente, setImprimirPendiente] = useState(false);
+
+  const actualizar: Actualizar = (cambio) => setFicha((f) => conConsumo(cambio(f)));
+  const sinGuardar = huella(ficha) !== referencia;
 
   const medidas = medidasEfectivas(ficha.tipoMedida, ficha.medidas);
-  const { prenda, manga, ancho, merma, tela, rollos, metrosRollo } = ficha.tela;
-  const consumo = useMemo(
-    () => consumoDeTela(prenda, manga, medidas, ancho, merma),
-    [prenda, manga, medidas, ancho, merma],
-  );
-  const lote = prendasPorLote(rollos, metrosRollo, consumo.metros);
+  const consumo = useMemo(() => calcularConsumo(ficha.tela, medidas), [ficha.tela, medidas]);
+  const lote = prendasPorLote(ficha.tela.rollos, ficha.tela.metrosRollo, consumo.metros);
 
-  // El consumo calculado se anota solo en la tela elegida (como en el prototipo).
+  // Avisar antes de cerrar la pestaña con cambios sin guardar.
   useEffect(() => {
-    const m = redondear2(consumo.metros);
-    setFicha((f) => (f.telas[tela] === m ? f : { ...f, telas: { ...f.telas, [tela]: m } }));
-  }, [consumo.metros, tela]);
+    if (!sinGuardar) return;
+    const h = (e: BeforeUnloadEvent) => e.preventDefault();
+    addEventListener("beforeunload", h);
+    return () => removeEventListener("beforeunload", h);
+  }, [sinGuardar]);
+
+  // Imprimir después de que la hoja ya se pintó con el folio.
+  useEffect(() => {
+    if (!imprimirPendiente || vista !== "ficha") return;
+    setImprimirPendiente(false);
+    requestAnimationFrame(() => window.print());
+  }, [imprimirPendiente, vista]);
+
+  useEffect(() => {
+    if (!aviso) return;
+    const t = setTimeout(() => setAviso(""), 3500);
+    return () => clearTimeout(t);
+  }, [aviso]);
+
+  function abrir(f: Ficha) {
+    const lista = conConsumo(f);
+    setFicha(lista);
+    setReferencia(huella(lista));
+    setPestana("clienta");
+    setVista("ficha");
+  }
+
+  async function guardar(): Promise<boolean> {
+    if (!ficha.nombre.trim()) {
+      alert("Escribe el nombre de la clienta antes de guardar.");
+      setVista("ficha");
+      setPestana("clienta");
+      return false;
+    }
+    const g = await guardarFicha(ficha);
+    setFicha(g);
+    setReferencia(huella(g));
+    setAviso(`Ficha guardada · folio ${String(g.folio).padStart(4, "0")}`);
+    return true;
+  }
+
+  async function imprimir() {
+    // Toda hoja impresa queda en Reportes; sin nombre se imprime sin guardar.
+    if (ficha.nombre.trim() && sinGuardar && !(await guardar())) return;
+    setImprimirPendiente(true);
+  }
+
+  function nueva() {
+    if (sinGuardar && !confirm(SIN_GUARDAR)) return;
+    abrir(fichaNueva());
+  }
 
   return (
     <>
@@ -44,28 +118,80 @@ export default function App() {
         <h1>
           Creaciones Kathy <span>reportes de taller</span>
         </h1>
-        <p className="nota">Los datos son de ejemplo. La hoja de la derecha se corrige haciendo clic en cualquier valor.</p>
+        <nav className="vistas" aria-label="Secciones">
+          <button aria-current={vista === "ficha"} onClick={() => setVista("ficha")}>
+            Ficha{sinGuardar && <span className="punto" title="Sin guardar" />}
+          </button>
+          <button aria-current={vista === "reportes"} onClick={() => setVista("reportes")}>
+            Reportes
+          </button>
+        </nav>
       </header>
 
-      <div className="wrap">
-        <section className="panel" aria-label="Captura">
-          <div className="tabs" role="tablist">
-            {PESTANAS.map((p) => (
-              <button key={p.id} role="tab" aria-selected={pestana === p.id} onClick={() => setPestana(p.id)}>
-                {p.nombre}
-              </button>
-            ))}
-          </div>
-          {pestana === "clienta" && <TabClienta ficha={ficha} actualizar={actualizar} />}
-          {pestana === "medidas" && <TabMedidas ficha={ficha} actualizar={actualizar} />}
-          {pestana === "tela" && <TabTela ficha={ficha} actualizar={actualizar} consumo={consumo} lote={lote} />}
-          {pestana === "insumos" && <TabInsumos ficha={ficha} actualizar={actualizar} />}
-        </section>
+      {aviso && (
+        <div className="aviso-flot" role="status">
+          {aviso}
+        </div>
+      )}
 
-        <VistaPrevia>
-          <Hoja ficha={ficha} actualizar={actualizar} medidas={medidas} consumo={consumo} lote={lote} />
-        </VistaPrevia>
-      </div>
+      {vista === "reportes" ? (
+        <Reportes
+          abierta={ficha.uid}
+          onAbrir={(f) => {
+            if (f.uid !== ficha.uid && sinGuardar && !confirm(SIN_GUARDAR)) return;
+            abrir(f);
+          }}
+          onImprimir={(f) => {
+            if (f.uid !== ficha.uid && sinGuardar && !confirm(SIN_GUARDAR)) return;
+            abrir(f);
+            setImprimirPendiente(true);
+          }}
+          onBorrada={(uid) => {
+            // Si se borró la ficha abierta, queda como nueva y sin guardar.
+            if (uid === ficha.uid) {
+              setFicha((f) => ({ ...f, folio: 0, creada: "", actualizada: "" }));
+              setReferencia("");
+            }
+          }}
+          onAviso={setAviso}
+        />
+      ) : (
+        <div className="wrap">
+          <section className="panel" aria-label="Captura">
+            <div className="acciones">
+              <span className="estado">
+                {ficha.folio ? `Folio ${String(ficha.folio).padStart(4, "0")}` : "Ficha nueva"}
+                {sinGuardar ? (
+                  <b className="sin"> · sin guardar</b>
+                ) : (
+                  ficha.folio > 0 && <span className="ok"> · guardada</span>
+                )}
+              </span>
+              <button className="btn sec-btn" onClick={nueva}>
+                Nueva
+              </button>
+              <button className="btn" onClick={guardar} disabled={!sinGuardar}>
+                Guardar
+              </button>
+            </div>
+            <div className="tabs" role="tablist">
+              {PESTANAS.map((p) => (
+                <button key={p.id} role="tab" aria-selected={pestana === p.id} onClick={() => setPestana(p.id)}>
+                  {p.nombre}
+                </button>
+              ))}
+            </div>
+            {pestana === "clienta" && <TabClienta ficha={ficha} actualizar={actualizar} />}
+            {pestana === "medidas" && <TabMedidas ficha={ficha} actualizar={actualizar} />}
+            {pestana === "tela" && <TabTela ficha={ficha} actualizar={actualizar} consumo={consumo} lote={lote} />}
+            {pestana === "insumos" && <TabInsumos ficha={ficha} actualizar={actualizar} />}
+          </section>
+
+          <VistaPrevia onImprimir={imprimir}>
+            <Hoja ficha={ficha} actualizar={actualizar} medidas={medidas} consumo={consumo} lote={lote} />
+          </VistaPrevia>
+        </div>
+      )}
     </>
   );
 }

@@ -66,13 +66,14 @@ export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
         <span className="chip">{etiqueta}</span>
         <div className="big">{consumo.metros.toFixed(2)} m</div>
         <small>
-          {consumo.renglones.map((r, i) => (
+          {consumo.renglones.length === 0 && "Captura las medidas de la clienta (o elige una talla) para calcular la tela."}
+          {consumo.renglones.length > 0 && consumo.renglones.map((r, i) => (
             <span key={i}>
               Largo {i + 1}: {r.piezas.join(" + ")} → {r.largo.toFixed(0)} cm
               <br />
             </span>
           ))}
-          Subtotal {consumo.totalCm.toFixed(0)} cm + {t.merma}% de merma
+          {consumo.renglones.length > 0 && `Subtotal ${consumo.totalCm.toFixed(0)} cm + ${t.merma}% de merma`}
           {consumo.noCabe && (
             <>
               <br />

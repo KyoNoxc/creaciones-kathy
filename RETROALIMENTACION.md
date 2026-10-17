@@ -13,7 +13,7 @@ Estados: 🟡 pendiente · 🔵 en proceso · ✅ hecho · ⏸️ en espera de r
 | 2026-10-17 | Agregar HH hombro a hombro, H hombro, SF sisa frente, SE sisa espalda, LCb largo capa brazo, P puño, C costado | ✅ | |
 | 2026-10-17 | Ajustar claves según su libreta: CCo cuello, CK rodilla (knee), LCh largo de chaqueta | ✅ | |
 | 2026-10-17 | App que calcule cuánta tela lleva una prenda y cuántas prendas salen de rollos o lotes | 🔵 | Prototipo listo, falta validarlo con Kathy |
-| 2026-10-17 | Apartado de reportes donde se captura la info y se imprime | 🔵 | Falta historial de fichas |
+| 2026-10-17 | Apartado de reportes donde se captura la info y se imprime | ✅ | Fase 2: fichas guardadas, Reportes con buscador, reabrir, duplicar, imprimir, borrar y respaldo JSON |
 | 2026-10-17 | Vista previa antes de imprimir y poder editarla | ✅ | En el prototipo |
 | 2026-10-17 | Diseño con los colores del logo, frase "Diseños exclusivos", logo más chico arriba | ✅ | |
 | 2026-10-17 | Todo en el frente de la hoja | ✅ | Hoja carta, una cara |

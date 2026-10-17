@@ -225,7 +225,7 @@ export function Hoja({ ficha, actualizar, medidas, consumo, lote }: Props) {
       <div className="pie">
         <span>Creaciones Kathy · Guadalupe, N.L.</span>
         <span>
-          Folio {String(ficha.folio).padStart(4, "0")} · {fechaCorta(ficha.fecha)}
+          {ficha.folio ? `Folio ${String(ficha.folio).padStart(4, "0")}` : "Sin folio"} · {fechaCorta(ficha.fecha)}
         </span>
       </div>
     </article>

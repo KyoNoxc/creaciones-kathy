@@ -48,14 +48,15 @@ export function TabMedidas({ ficha, actualizar }: { ficha: Ficha; actualizar: Ac
                 type="number"
                 step="0.5"
                 inputMode="decimal"
-                value={v}
+                value={v || ""}
+                placeholder="—"
                 disabled={!aMedida}
                 onChange={(e) => {
                   const x = num(e.target.value);
                   actualizar((f) => ({ ...f, medidas: { ...f.medidas, [m.clave]: x } }));
                 }}
               />
-              <span className="half">{m.mitad ? `½ ${v / 2}` : ""}</span>
+              <span className="half">{m.mitad && v ? `½ ${v / 2}` : ""}</span>
             </div>
           );
         })}
