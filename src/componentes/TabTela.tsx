@@ -1,6 +1,6 @@
 import type { Actualizar } from "../App";
 import { PRENDAS, prendaLlevaManga, type Consumo, type Lote, type Manga, type Prenda } from "../calculo";
-import { CONFIG_DEFAULT } from "../calculo/config";
+import { useConfig } from "../datos/contexto";
 import { TELAS, num, type Ficha } from "../datos/ficha";
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
 
 export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
   const t = ficha.tela;
+  const cfg = useConfig().calculo;
   const poner = <K extends keyof Ficha["tela"]>(k: K, v: Ficha["tela"][K]) =>
     actualizar((f) => ({ ...f, tela: { ...f.tela, [k]: v } }));
   const etiqueta = PRENDAS.find((p) => p.valor === t.prenda)?.etiqueta ?? "";
@@ -86,7 +87,7 @@ export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
       </div>
       <p className="formula">
         Cómo se calcula: la tela se dobla a lo largo (ancho útil {consumo.anchoUtil.toFixed(0)} cm). Cada pieza es ¼ del contorno +{" "}
-        {CONFIG_DEFAULT.holgura} cm de holgura + {CONFIG_DEFAULT.costura} cm de costura; el largo suma dobladillo. Las piezas que caben
+        {cfg.holgura} cm de holgura + {cfg.costura} cm de costura; el largo suma dobladillo. Las piezas que caben
         lado a lado comparten el mismo largo. Al final se suma la merma.
       </p>
 

@@ -1,12 +1,18 @@
-// Lista oficial de medidas de Kathy, en su orden. En la fase 3 se vuelve editable desde Configuración.
+// Lista oficial de medidas de Kathy, en su orden. Se edita desde Configuración.
 export interface DefMedida {
+  /**
+   * Identificador fijo con el que se guardan los valores en las fichas y que usan las fórmulas.
+   * No cambia aunque Kathy renombre la clave que se ve (p. ej. CBr → CB).
+   */
+  id: string;
+  /** Clave que se muestra en la app y en la hoja. */
   clave: string;
   nombre: string;
   /** En la hoja se calcula sola la mitad (½), como en la libreta. */
   mitad: boolean;
 }
 
-export const MEDIDAS: DefMedida[] = [
+export const MEDIDAS: DefMedida[] = ([
   { clave: "CCo", nombre: "Contorno de cuello", mitad: true },
   { clave: "AE", nombre: "Ancho de espalda", mitad: true },
   { clave: "HH", nombre: "Hombro a hombro", mitad: false },
@@ -38,7 +44,7 @@ export const MEDIDAS: DefMedida[] = [
   { clave: "LP", nombre: "Largo de pantalón", mitad: false },
   { clave: "CK", nombre: "Contorno de rodilla", mitad: true },
   { clave: "CBo", nombre: "Contorno de bota", mitad: true },
-];
+] as Omit<DefMedida, "id">[]).map((m) => ({ id: m.clave, ...m }));
 
 export type Medidas = Record<string, number>;
 

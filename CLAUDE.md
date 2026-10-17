@@ -47,6 +47,8 @@ Más 3 renglones libres de "Otras medidas".
 Notas:
 - En la libreta de Kathy "Contorno de brazo" aparece como CB, pero CB ya es Contorno de busto. En la app se usa **CBr** hasta que ella confirme.
 - Las medidas deben estar en una lista configurable (clave, nombre, si lleva ½, orden), porque se siguen agregando y renombrando.
+- Cada medida tiene un `id` fijo (el de las 30 originales es su clave inicial). Las fichas y las fórmulas usan el `id`, no la clave visible, así que renombrar una clave no pierde valores. Las medidas que usa el cálculo (`MEDIDAS_DEL_CALCULO` en `src/calculo/piezas.ts`) no se pueden quitar.
+- La configuración (cálculo, medidas, tallas) se guarda en IndexedDB (`ajustes`) y viaja en el respaldo JSON; al importar se pregunta si se reemplaza.
 
 ## Cálculo de tela (versión 1, ajustable)
 Método: la tela se dobla a lo largo; ancho útil = ancho/2 − 1 cm de orillo. Cada pieza se corta al doblez.

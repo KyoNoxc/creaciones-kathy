@@ -79,7 +79,7 @@ describe("respaldo", () => {
     const a = await guardarFicha(fichaEjemplo());
     const texto = JSON.stringify(await crearRespaldo());
     usarBase(`prueba-${++n}`);
-    expect(await importarRespaldo(texto)).toEqual({ nuevas: 1, actualizadas: 0, sinCambio: 0, invalidas: 0 });
+    expect(await importarRespaldo(texto)).toEqual({ nuevas: 1, actualizadas: 0, sinCambio: 0, invalidas: 0, config: false });
     expect(await listarFichas()).toEqual([a]);
   });
 

@@ -14,8 +14,8 @@ export const TIPOS_MEDIDA: { valor: TipoMedida; etiqueta: string }[] = [
 
 export type TallaIndustrial = Exclude<TipoMedida, "AM">;
 
-// VALORES PROVISIONALES: base talla M y un paso fijo por talla.
-// Reemplazar con la tabla industrial de Kathy en cuanto la mande (se editará en Configuración, fase 3).
+// VALORES PROVISIONALES de arranque: base talla M y un paso fijo por talla.
+// Kathy los reemplaza con su tabla industrial desde Configuración.
 const BASE_M: Medidas = {
   CCo: 36, AE: 38, HH: 40, H: 12, TT: 40, TD: 42, AB: 24, SB: 18, AEs: 20, CT: 84,
   CB: 92, SF: 20, SE: 21, CC: 74, CCad: 100, ACad: 20, C: 20, LB: 58, LCb: 10, LML: 60,
@@ -35,11 +35,12 @@ export const TALLAS: Record<TallaIndustrial, Medidas> = Object.fromEntries(
   ]),
 ) as Record<TallaIndustrial, Medidas>;
 
-export const TALLAS_PROVISIONALES = true;
+export type TablaTallas = Record<TallaIndustrial, Medidas>;
+export const TALLAS_INDUSTRIALES = Object.keys(NIVEL) as TallaIndustrial[];
 
 /** Las medidas que valen para la ficha: las capturadas si es "A medida", o las de la talla. */
-export function medidasEfectivas(tipo: TipoMedida, capturadas: Medidas): Medidas {
-  return tipo === "AM" ? capturadas : TALLAS[tipo];
+export function medidasEfectivas(tipo: TipoMedida, capturadas: Medidas, tallas: TablaTallas = TALLAS): Medidas {
+  return tipo === "AM" ? capturadas : tallas[tipo];
 }
 
 export function etiquetaTipoMedida(tipo: TipoMedida): string {

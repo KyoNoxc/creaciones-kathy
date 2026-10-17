@@ -1,4 +1,4 @@
-import { CONFIG_DEFAULT, type Manga, type Prenda } from "../calculo";
+import { CONFIG_DEFAULT, type ConfigCalculo, type Manga, type Prenda } from "../calculo";
 import { MEDIDAS, MEDIDAS_EJEMPLO, type Medidas } from "./medidas";
 import type { TipoMedida } from "./tallas";
 
@@ -66,7 +66,7 @@ export function hoy(): string {
 }
 
 /** Ficha en blanco, lista para capturar una clienta nueva. */
-export function fichaNueva(): Ficha {
+export function fichaNueva(calculo: Pick<ConfigCalculo, "anchoTela" | "merma"> = CONFIG_DEFAULT): Ficha {
   return {
     uid: nuevoUid(),
     folio: 0,
@@ -82,13 +82,13 @@ export function fichaNueva(): Ficha {
     obs: "",
     obs2: "",
     tipoMedida: "AM",
-    medidas: Object.fromEntries(MEDIDAS.map((m) => [m.clave, 0])),
+    medidas: Object.fromEntries(MEDIDAS.map((m) => [m.id, 0])),
     otras: ["", "", ""],
     tela: {
       prenda: "falda",
       manga: "larga",
-      ancho: CONFIG_DEFAULT.anchoTela,
-      merma: CONFIG_DEFAULT.merma,
+      ancho: calculo.anchoTela,
+      merma: calculo.merma,
       tela: "Algodón",
       rollos: 3,
       metrosRollo: 25,

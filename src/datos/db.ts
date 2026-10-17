@@ -1,13 +1,27 @@
 import Dexie, { type Table } from "dexie";
+import { normalizarConfig, type Configuracion } from "./configuracion";
 import { nuevoUid, hoy, normalizarFicha, type Ficha } from "./ficha";
 
 // Las fichas viven en el navegador (IndexedDB). No hay servidor: el respaldo JSON es la copia de seguridad.
 class BaseKathy extends Dexie {
   fichas!: Table<Ficha, string>;
+  ajustes!: Table<{ id: string; valor: unknown }, string>;
   constructor(nombre = "creaciones-kathy") {
     super(nombre);
     this.version(1).stores({ fichas: "uid, folio, nombre, actualizada" });
+    this.version(2).stores({ ajustes: "id" });
   }
+}
+
+// ===== Configuración =====
+
+export async function leerConfig(): Promise<Configuracion> {
+  const fila = await db.ajustes.get("config");
+  return normalizarConfig(fila?.valor);
+}
+
+export async function guardarConfig(c: Configuracion): Promise<void> {
+  await db.ajustes.put({ id: "config", valor: c });
 }
 
 export let db = new BaseKathy();
@@ -69,10 +83,31 @@ export interface Respaldo {
   version: 1;
   exportado: string;
   fichas: Ficha[];
+  configuracion?: Configuracion;
 }
 
 export async function crearRespaldo(): Promise<Respaldo> {
-  return { app: "creaciones-kathy", version: 1, exportado: new Date().toISOString(), fichas: await db.fichas.toArray() };
+  return {
+    app: "creaciones-kathy",
+    version: 1,
+    exportado: new Date().toISOString(),
+    fichas: await db.fichas.toArray(),
+    configuracion: await leerConfig(),
+  };
+}
+
+/** Lee el archivo de respaldo sin importar nada todavía. */
+export function leerRespaldo(texto: string): { fichas: unknown[]; configuracion?: unknown } {
+  let datos: unknown;
+  try {
+    datos = JSON.parse(texto);
+  } catch {
+    throw new Error("El archivo no es un respaldo válido (no se pudo leer).");
+  }
+  if (Array.isArray(datos)) return { fichas: datos };
+  const r = datos as Partial<Respaldo> | null;
+  if (!r || !Array.isArray(r.fichas)) throw new Error("El archivo no es un respaldo de Creaciones Kathy.");
+  return { fichas: r.fichas, configuracion: r.configuracion };
 }
 
 export interface ResultadoImportacion {
@@ -80,24 +115,23 @@ export interface ResultadoImportacion {
   actualizadas: number;
   sinCambio: number;
   invalidas: number;
+  /** Se reemplazó la configuración con la del respaldo. */
+  config: boolean;
 }
 
 /**
  * Importa un respaldo. Las fichas se reconocen por su identificador: las que no existen se agregan
  * y las que ya existen solo se reemplazan si la del respaldo es más reciente. Nunca se borra nada.
+ * La configuración del respaldo solo se usa si se pide con conConfig.
  */
-export async function importarRespaldo(texto: string): Promise<ResultadoImportacion> {
-  let datos: unknown;
-  try {
-    datos = JSON.parse(texto);
-  } catch {
-    throw new Error("El archivo no es un respaldo válido (no se pudo leer).");
-  }
-  const lista = Array.isArray(datos) ? datos : (datos as Partial<Respaldo> | null)?.fichas;
-  if (!Array.isArray(lista)) throw new Error("El archivo no es un respaldo de Creaciones Kathy.");
-
-  const r: ResultadoImportacion = { nuevas: 0, actualizadas: 0, sinCambio: 0, invalidas: 0 };
-  await db.transaction("rw", db.fichas, async () => {
+export async function importarRespaldo(texto: string, conConfig = false): Promise<ResultadoImportacion> {
+  const { fichas: lista, configuracion } = leerRespaldo(texto);
+  const r: ResultadoImportacion = { nuevas: 0, actualizadas: 0, sinCambio: 0, invalidas: 0, config: false };
+  await db.transaction("rw", db.fichas, db.ajustes, async () => {
+    if (conConfig && configuracion) {
+      await guardarConfig(normalizarConfig(configuracion));
+      r.config = true;
+    }
     let folio = (await siguienteFolio()) - 1;
     for (const x of lista) {
       const f = normalizarFicha(x);

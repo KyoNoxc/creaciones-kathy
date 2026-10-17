@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { borrarFicha, crearRespaldo, duplicarFicha, filtrarFichas, importarRespaldo, listarFichas } from "../datos/db";
+import type { Configuracion } from "../datos/configuracion";
+import {
+  borrarFicha,
+  crearRespaldo,
+  duplicarFicha,
+  filtrarFichas,
+  importarRespaldo,
+  leerConfig,
+  leerRespaldo,
+  listarFichas,
+} from "../datos/db";
 import { fechaCorta, hoy, type Ficha } from "../datos/ficha";
 
 interface Props {
@@ -9,12 +19,13 @@ interface Props {
   onImprimir: (f: Ficha) => void;
   onBorrada: (uid: string) => void;
   onAviso: (texto: string) => void;
+  onConfigImportada: (c: Configuracion) => void;
 }
 
 const folio = (n: number) => String(n).padStart(4, "0");
 
 /** Historial de fichas guardadas: buscar, reabrir, duplicar, imprimir, borrar y respaldo. */
-export function Reportes({ abierta, onAbrir, onImprimir, onBorrada, onAviso }: Props) {
+export function Reportes({ abierta, onAbrir, onImprimir, onBorrada, onAviso, onConfigImportada }: Props) {
   const [fichas, setFichas] = useState<Ficha[] | null>(null);
   const [busca, setBusca] = useState("");
   const [error, setError] = useState("");
@@ -61,8 +72,18 @@ export function Reportes({ abierta, onAbrir, onImprimir, onBorrada, onAviso }: P
     if (!f) return;
     setError("");
     try {
-      const r = await importarRespaldo(await f.text());
+      const texto = await f.text();
+      const conConfig =
+        !!leerRespaldo(texto).configuracion &&
+        confirm(
+          "El respaldo también trae la configuración (tallas, lista de medidas, holgura, costura…).\n\n" +
+            "Aceptar: reemplazar la configuración de esta computadora por la del respaldo.\n" +
+            "Cancelar: importar solo las fichas.",
+        );
+      const r = await importarRespaldo(texto, conConfig);
+      if (r.config) onConfigImportada(await leerConfig());
       const partes = [`${r.nuevas} nuevas`, `${r.actualizadas} actualizadas`];
+      if (r.config) partes.push("configuración reemplazada");
       if (r.sinCambio) partes.push(`${r.sinCambio} ya estaban`);
       if (r.invalidas) partes.push(`${r.invalidas} no se pudieron leer`);
       onAviso(`Respaldo importado: ${partes.join(", ")}`);

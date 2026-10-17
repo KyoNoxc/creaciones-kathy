@@ -25,5 +25,5 @@ Para imprimir: botón **Imprimir** arriba de la vista previa. En el diálogo del
 
 1. ✅ Captura, medidas con tallas, tela, insumos, hoja editable e impresión.
 2. ✅ Guardado de fichas (IndexedDB/Dexie), Reportes, respaldo JSON.
-3. Configuración (tallas, medidas, holgura, costura, dobladillo, merma, ancho).
+3. ✅ Configuración (tallas, medidas, holgura, costura, dobladillo, merma, ancho).
 4. PWA sin internet con fuentes locales.

@@ -1,7 +1,8 @@
 import type { Actualizar } from "../App";
 import type { Consumo, Lote } from "../calculo";
 import { TELAS, fechaCorta, fechaIso, num, type Ficha } from "../datos/ficha";
-import { MEDIDAS, type Medidas } from "../datos/medidas";
+import { useConfig } from "../datos/contexto";
+import type { Medidas } from "../datos/medidas";
 import { etiquetaTipoMedida } from "../datos/tallas";
 import logo from "../assets/logo-hoja.jpg";
 import { Editable } from "./Editable";
@@ -15,10 +16,15 @@ interface Props {
 }
 
 const cant = (x: number) => (x ? String(x) : "—");
+/** Hasta cuántas medidas caben en una sola columna sin pasarse de la hoja. */
+const MAX_UNA_COLUMNA = 34;
 
 /** La hoja carta tal cual sale impresa. Cada dato se corrige con clic y regresa al formulario. */
 export function Hoja({ ficha, actualizar, medidas, consumo, lote }: Props) {
   const aMedida = ficha.tipoMedida === "AM";
+  const lista = useConfig().medidas;
+  const dosColumnas = lista.length > MAX_UNA_COLUMNA;
+  const mitad = Math.ceil(lista.length / 2);
   const texto = (k: "nombre" | "tel" | "prendaTxt" | "obs" | "obs2") => (t: string) => actualizar((f) => ({ ...f, [k]: t }));
   const fecha = (k: "fecha" | "prueba" | "entrega") => (t: string) => {
     const iso = fechaIso(t);
@@ -54,38 +60,43 @@ export function Hoja({ ficha, actualizar, medidas, consumo, lote }: Props) {
               <span>Medidas (cm)</span>
               <span>{etiquetaTipoMedida(ficha.tipoMedida)}</span>
             </div>
-            <table className="m">
-              <thead>
-                <tr>
-                  <th>Clave</th>
-                  <th>Medida</th>
-                  <th className="der">cm</th>
-                  <th className="der">½</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MEDIDAS.map((m) => {
-                  const v = medidas[m.clave] ?? 0;
-                  return (
-                    <tr key={m.clave}>
-                      <td className="ab">{m.clave}</td>
-                      <td>{m.nombre}</td>
-                      <Editable
-                        como="td"
-                        className="v"
-                        valor={v ? String(v) : ""}
-                        bloqueado={!aMedida}
-                        onCambio={(t) => {
-                          const x = num(t);
-                          actualizar((f) => ({ ...f, medidas: { ...f.medidas, [m.clave]: x } }));
-                        }}
-                      />
-                      <td className="h">{m.mitad && v ? v / 2 : ""}</td>
+            {/* Con muchas medidas la tabla se parte en dos columnas para que todo quepa en una hoja. */}
+            <div className={dosColumnas ? "m-dos" : undefined}>
+              {(dosColumnas ? [lista.slice(0, mitad), lista.slice(mitad)] : [lista]).map((parte, i) => (
+                <table className="m" key={i}>
+                  <thead>
+                    <tr>
+                      <th>Clave</th>
+                      <th>Medida</th>
+                      <th className="der">cm</th>
+                      <th className="der">½</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {parte.map((m) => {
+                      const v = medidas[m.id] ?? 0;
+                      return (
+                        <tr key={m.id}>
+                          <td className="ab">{m.clave}</td>
+                          <td>{m.nombre}</td>
+                          <Editable
+                            como="td"
+                            className="v"
+                            valor={v ? String(v) : ""}
+                            bloqueado={!aMedida}
+                            onCambio={(t) => {
+                              const x = num(t);
+                              actualizar((f) => ({ ...f, medidas: { ...f.medidas, [m.id]: x } }));
+                            }}
+                          />
+                          <td className="h">{m.mitad && v ? v / 2 : ""}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ))}
+            </div>
           </div>
           <div>
             <div className="tt">Otras medidas</div>

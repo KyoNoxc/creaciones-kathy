@@ -61,7 +61,7 @@ select:disabled { opacity: .6 }
 .btn.peligro:hover { background: #C62828; border-color: #C62828; color: #fff }
 
 /* Navegación Ficha / Reportes */
-nav.vistas { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
+nav.vistas { display: flex; flex-wrap: wrap; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 4px }
 nav.vistas button { font: 700 13.5px var(--f-body); background: none; border: 0; border-radius: 99px; padding: 7px 18px; color: var(--muted); cursor: pointer; position: relative }
 nav.vistas button[aria-current="true"] { background: var(--rosa); color: #fff }
 .punto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: 6px; vertical-align: 2px }
@@ -92,6 +92,27 @@ nav.vistas button[aria-current="true"] { background: var(--rosa); color: #fff }
 .tabla-rep tr.abierta td { background: var(--rosa-tenue) }
 .cuenta { font-size: 12px; color: var(--muted); margin: 8px 0 0 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0) }
+
+/* Configuración */
+.config { max-width: 1000px; margin: 0 auto }
+.config .tabs button { flex: 0 1 auto; padding-inline: 18px }
+.lista-err { margin: 0; padding: 10px 14px 10px 32px; border-bottom: 1px solid var(--line); font-size: 13px }
+.con-unidad { display: flex; align-items: center; gap: 6px }
+.con-unidad span { color: var(--muted); font-size: 12px; min-width: 18px }
+.ayuda { font-weight: 400; color: var(--muted) }
+.check { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 13px }
+.check input, .cfg-medidas input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--rosa) }
+.cfg-medidas td, .cfg-tallas td { padding: 4px 6px }
+.cfg-medidas input:not([type]) { padding: 6px 8px }
+.cfg-medidas input.clave { width: 76px; font-weight: 700 }
+.cfg-medidas td.orden { white-space: nowrap; width: 64px }
+.flecha { background: none; border: 1px solid var(--line); border-radius: 4px; color: var(--rosa-osc); cursor: pointer; width: 26px; height: 26px; font-size: 10px; padding: 0 }
+.flecha + .flecha { margin-left: 3px }
+.flecha:disabled { opacity: .3; cursor: default }
+.del-calc { color: var(--rosa); font-size: 20px; padding-left: 10px }
+.cfg-tallas td.ab { font: 600 12px var(--f-display); color: var(--rosa) }
+.cfg-tallas input { width: 70px; padding: 5px 6px; text-align: right; font-variant-numeric: tabular-nums }
+.cfg-tallas tbody tr:nth-child(even) td { background: var(--rosa-tenue) }
 
 .viewer { min-width: 0 }
 .viewer .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px }
@@ -131,6 +152,12 @@ table.m td.ab { font: 600 10px var(--f-display); color: #D23A72; width: 38px }
 table.m td.v { text-align: right; width: 52px; font-weight: 700 }
 table.m td.h { text-align: right; width: 44px; color: #86707A }
 table.m tr:nth-child(even) td { background: #FDF6F9 }
+.m-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.m-dos table.m { font-size: 9.5px }
+.m-dos table.m td { padding: 1.2px 3px }
+.m-dos table.m td.ab { width: 30px; font-size: 9px }
+.m-dos table.m td.v { width: 34px }
+.m-dos table.m td.h { width: 26px }
 .col { display: flex; flex-direction: column; gap: 9px; min-width: 0 }
 .calc { border: 1.5px solid #D23A72; border-radius: 4px; padding: 7px 9px; display: grid; gap: 3px; background: #FDF3F7 }
 .calc .r { display: flex; justify-content: space-between; gap: 8px }

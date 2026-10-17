@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { consumoDeTela, prendasPorLote, redondear2, type Consumo } from "./calculo";
-import { guardarFicha } from "./datos/db";
+import type { ConfigCalculo } from "./calculo/config";
+import { configInicial, type Configuracion } from "./datos/configuracion";
+import { ContextoConfig } from "./datos/contexto";
+import { guardarFicha, leerConfig } from "./datos/db";
+import { Configuracion as PantallaConfig } from "./componentes/Configuracion";
 import { fichaNueva, type Ficha } from "./datos/ficha";
 import type { Medidas } from "./datos/medidas";
 import { medidasEfectivas } from "./datos/tallas";
@@ -19,31 +23,52 @@ const PESTANAS = [
   { id: "insumos", nombre: "Insumos" },
 ] as const;
 type Pestana = (typeof PESTANAS)[number]["id"];
-type Vista = "ficha" | "reportes";
+type Vista = "ficha" | "reportes" | "config";
 
 export type Actualizar = (cambio: (f: Ficha) => Ficha) => void;
 
 const hayMedidas = (M: Medidas) => Object.values(M).some((v) => v > 0);
 
 /** Sin medidas capturadas no se calcula consumo (si no, saldrían solo la pretina o el cuello). */
-function calcularConsumo(f: Ficha["tela"], M: Medidas): Consumo {
-  const c = consumoDeTela(f.prenda, f.manga, M, f.ancho, f.merma);
+function calcularConsumo(f: Ficha["tela"], M: Medidas, cfg: ConfigCalculo): Consumo {
+  const c = consumoDeTela(f.prenda, f.manga, M, f.ancho, f.merma, cfg);
   return hayMedidas(M) ? c : { ...c, renglones: [], totalCm: 0, metros: 0, noCabe: false };
 }
 
-const consumoDe = (f: Ficha) => calcularConsumo(f.tela, medidasEfectivas(f.tipoMedida, f.medidas));
-
 /** El consumo calculado se anota solo en la tela elegida (como en el prototipo). */
-function conConsumo(f: Ficha): Ficha {
-  const m = redondear2(consumoDe(f).metros);
+function conConsumoCfg(f: Ficha, config: Configuracion): Ficha {
+  const M = medidasEfectivas(f.tipoMedida, f.medidas, config.tallas);
+  const m = redondear2(calcularConsumo(f.tela, M, config.calculo).metros);
   return f.telas[f.tela.tela] === m ? f : { ...f, telas: { ...f.telas, [f.tela.tela]: m } };
 }
 
 const huella = (f: Ficha) => JSON.stringify(f);
 const SIN_GUARDAR = "Hay cambios sin guardar en la ficha abierta. ¿Quieres descartarlos?";
 
+/** Carga la configuración guardada antes de mostrar la app. */
 export default function App() {
-  const [ficha, setFicha] = useState<Ficha>(() => conConsumo(fichaNueva()));
+  const [config, setConfig] = useState<Configuracion | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    leerConfig()
+      .then(setConfig)
+      .catch(() => {
+        setError(true);
+        setConfig(configInicial());
+      });
+  }, []);
+  if (!config) return <p className="vacio">Cargando…</p>;
+  return (
+    <ContextoConfig.Provider value={config}>
+      {error && <p className="error">No se pudo leer la configuración guardada; se usan los valores iniciales.</p>}
+      <Taller config={config} onConfig={setConfig} />
+    </ContextoConfig.Provider>
+  );
+}
+
+function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Configuracion) => void }) {
+  const conConsumo = (f: Ficha) => conConsumoCfg(f, config);
+  const [ficha, setFicha] = useState<Ficha>(() => conConsumo(fichaNueva(config.calculo)));
   // Cómo estaba la ficha al abrirla o guardarla; si cambia, hay algo sin guardar.
   const [referencia, setReferencia] = useState(() => huella(ficha));
   const [vista, setVista] = useState<Vista>("ficha");
@@ -51,20 +76,31 @@ export default function App() {
   const [aviso, setAviso] = useState("");
   const [imprimirPendiente, setImprimirPendiente] = useState(false);
 
+  const [configSinGuardar, setConfigSinGuardar] = useState(false);
+
   const actualizar: Actualizar = (cambio) => setFicha((f) => conConsumo(cambio(f)));
   const sinGuardar = huella(ficha) !== referencia;
 
-  const medidas = medidasEfectivas(ficha.tipoMedida, ficha.medidas);
-  const consumo = useMemo(() => calcularConsumo(ficha.tela, medidas), [ficha.tela, medidas]);
+  function irA(v: Vista) {
+    if (v === vista) return;
+    if (configSinGuardar && !confirm("Hay cambios sin guardar en Configuración. ¿Quieres descartarlos?")) return;
+    setVista(v);
+  }
+
+  const medidas = medidasEfectivas(ficha.tipoMedida, ficha.medidas, config.tallas);
+  const consumo = useMemo(
+    () => calcularConsumo(ficha.tela, medidas, config.calculo),
+    [ficha.tela, medidas, config.calculo],
+  );
   const lote = prendasPorLote(ficha.tela.rollos, ficha.tela.metrosRollo, consumo.metros);
 
   // Avisar antes de cerrar la pestaña con cambios sin guardar.
   useEffect(() => {
-    if (!sinGuardar) return;
+    if (!sinGuardar && !configSinGuardar) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();
     addEventListener("beforeunload", h);
     return () => removeEventListener("beforeunload", h);
-  }, [sinGuardar]);
+  }, [sinGuardar, configSinGuardar]);
 
   // Imprimir después de que la hoja ya se pintó con el folio.
   useEffect(() => {
@@ -109,7 +145,7 @@ export default function App() {
 
   function nueva() {
     if (sinGuardar && !confirm(SIN_GUARDAR)) return;
-    abrir(fichaNueva());
+    abrir(fichaNueva(config.calculo));
   }
 
   return (
@@ -119,11 +155,14 @@ export default function App() {
           Creaciones Kathy <span>reportes de taller</span>
         </h1>
         <nav className="vistas" aria-label="Secciones">
-          <button aria-current={vista === "ficha"} onClick={() => setVista("ficha")}>
+          <button aria-current={vista === "ficha"} onClick={() => irA("ficha")}>
             Ficha{sinGuardar && <span className="punto" title="Sin guardar" />}
           </button>
-          <button aria-current={vista === "reportes"} onClick={() => setVista("reportes")}>
+          <button aria-current={vista === "reportes"} onClick={() => irA("reportes")}>
             Reportes
+          </button>
+          <button aria-current={vista === "config"} onClick={() => irA("config")}>
+            Configuración
           </button>
         </nav>
       </header>
@@ -134,7 +173,15 @@ export default function App() {
         </div>
       )}
 
-      {vista === "reportes" ? (
+      {vista === "config" ? (
+        <PantallaConfig
+          onSinGuardar={setConfigSinGuardar}
+          onGuardada={(c) => {
+            onConfig(c);
+            setAviso("Configuración guardada");
+          }}
+        />
+      ) : vista === "reportes" ? (
         <Reportes
           abierta={ficha.uid}
           onAbrir={(f) => {
@@ -154,6 +201,7 @@ export default function App() {
             }
           }}
           onAviso={setAviso}
+          onConfigImportada={(c) => onConfig(c)}
         />
       ) : (
         <div className="wrap">
