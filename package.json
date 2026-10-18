@@ -7,10 +7,14 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "app": "npm run build && vite preview --open",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@fontsource/barlow-condensed": "5.1.0",
+    "@fontsource/great-vibes": "5.1.0",
+    "@fontsource/nunito-sans": "5.1.0",
     "dexie": "4.0.8",
     "react": "18.3.1",
     "react-dom": "18.3.1"
@@ -22,6 +26,7 @@
     "fake-indexeddb": "6.0.0",
     "typescript": "5.6.3",
     "vite": "5.4.10",
+    "vite-plugin-pwa": "0.20.5",
     "vitest": "2.1.4"
   }
 }
