@@ -2,3 +2,12 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# Notas de trabajo y material de referencia: se quedan solo en la computadora, no se suben a GitHub
+CLAUDE.md
+PROMPT_INICIAL.md
+RETROALIMENTACION.md
+docs/
+referencia/
+assets/
+firestore.rules
