@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // En GitHub Pages la app vive en /<nombre-del-repositorio>/; el flujo de despliegue pasa BASE.
+  base: process.env.BASE ?? "/",
   plugins: [
     react(),
     // App instalable que funciona sin internet: el service worker guarda todos los archivos de la app
@@ -16,8 +18,8 @@ export default defineConfig({
         short_name: "Creaciones Kathy",
         description: "Fichas de medidas, cálculo de tela y reportes para imprimir.",
         lang: "es-MX",
-        start_url: "/",
-        scope: "/",
+        start_url: "./",
+        scope: "./",
         display: "standalone",
         background_color: "#FBF5F7",
         theme_color: "#D23A72",
@@ -29,7 +31,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,jpg,woff2}"],
-        navigateFallback: "/index.html",
+        navigateFallback: "index.html",
       },
     }),
   ],
