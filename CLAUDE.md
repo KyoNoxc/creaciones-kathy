@@ -66,6 +66,7 @@ Método: la tela se dobla a lo largo; ancho útil = ancho/2 − 1 cm de orillo. 
 - Con una talla industrial el cálculo usa los valores de esa talla.
 - Holgura, costura, dobladillo y merma se cambian en Configuración, porque Kathy los va a ajustar con su experiencia.
 - Las fórmulas van en un archivo aparte (`src/calculo/`) con pruebas unitarias (Vitest) usando los ejemplos del prototipo.
+- Desde 2026-10-18 el ancho y el largo de cada pieza son **fórmulas de texto editables** en Configuración (`FORMULAS_INICIALES` en `src/calculo/config.ts`, lector seguro en `src/calculo/formula.ts`, sin eval). Aceptan claves de medidas (por id o clave visible), `holgura`, `costura`, `dobladillo`, `dobladilloManga`, `largoManga`, + − × ÷, paréntesis, ½ y `mayor()`/`menor()`. Las fórmulas iniciales reproducen exactamente las de arriba.
 
 ## Diseño
 - Logo: `assets/logo.png`. En el reporte va pequeño (≈ 2.5 cm de ancho), arriba a la izquierda, recortado al círculo de la mariposa y la máquina.

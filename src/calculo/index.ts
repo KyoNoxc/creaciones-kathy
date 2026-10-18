@@ -1,15 +1,18 @@
 import type { Medidas } from "../datos/medidas";
 import { acomodar, type Acomodo } from "./acomodo";
 import { CONFIG_DEFAULT, type ConfigCalculo } from "./config";
-import { piezasDePrenda, type Manga, type Prenda } from "./piezas";
+import { piezasConErrores, type Manga, type Prenda } from "./piezas";
 
 export * from "./acomodo";
 export * from "./config";
 export * from "./piezas";
+export * from "./formula";
 
 export interface Consumo extends Acomodo {
   /** Metros por prenda, ya con merma. */
   metros: number;
+  /** Fórmulas que no se pudieron calcular (esas piezas no se cuentan). */
+  errores: string[];
 }
 
 /** Total = suma de largos × (1 + merma%), en metros. */
@@ -21,8 +24,9 @@ export function consumoDeTela(
   mermaPct: number,
   cfg: ConfigCalculo = CONFIG_DEFAULT,
 ): Consumo {
-  const a = acomodar(piezasDePrenda(prenda, manga, M, cfg), anchoTela, cfg);
-  return { ...a, metros: (a.totalCm * (1 + mermaPct / 100)) / 100 };
+  const { piezas, errores } = piezasConErrores(prenda, manga, M, cfg);
+  const a = acomodar(piezas, anchoTela, cfg);
+  return { ...a, metros: (a.totalCm * (1 + mermaPct / 100)) / 100, errores };
 }
 
 export interface Lote {

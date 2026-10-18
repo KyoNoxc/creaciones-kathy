@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ConfigCalculo, Dobladillos } from "../calculo/config";
-import { MEDIDAS_DEL_CALCULO } from "../calculo/piezas";
-import { configInicial, nuevoIdMedida, validarConfig, type Configuracion as Config } from "../datos/configuracion";
+import { EditorFormulas } from "./EditorFormulas";
+import { configInicial, idsUsados, nuevoIdMedida, validarConfig, type Configuracion as Config } from "../datos/configuracion";
 import { useConfig } from "../datos/contexto";
 import { guardarConfig } from "../datos/db";
 import { num } from "../datos/ficha";
@@ -68,7 +68,7 @@ export function Configuracion(props: { onGuardada: (c: Config) => void; onSinGua
   );
 }
 
-interface PropsSeccion {
+export interface PropsSeccion {
   borrador: Config;
   setBorrador: React.Dispatch<React.SetStateAction<Config>>;
 }
@@ -88,7 +88,7 @@ function Numero(props: { etiqueta: string; valor: number; unidad: string; onCamb
 
 function SeccionTela({ borrador, setBorrador }: PropsSeccion) {
   const c = borrador.calculo;
-  const poner = (k: Exclude<keyof ConfigCalculo, "dobladillo">) => (v: number) =>
+  const poner = (k: Exclude<keyof ConfigCalculo, "dobladillo" | "formulas">) => (v: number) =>
     setBorrador((b) => ({ ...b, calculo: { ...b.calculo, [k]: v } }));
   const dob = (k: keyof Dobladillos) => (v: number) =>
     setBorrador((b) => ({ ...b, calculo: { ...b.calculo, dobladillo: { ...b.calculo.dobladillo, [k]: v } } }));
@@ -123,17 +123,20 @@ function SeccionTela({ borrador, setBorrador }: PropsSeccion) {
       <div>
         <button
           className="btn sec-btn"
-          onClick={() => setBorrador((b) => ({ ...b, calculo: structuredClone(inicial) }))}
+          onClick={() => setBorrador((b) => ({ ...b, calculo: { ...structuredClone(inicial), formulas: b.calculo.formulas } }))}
         >
           Regresar a los valores originales
         </button>
       </div>
+
+      <EditorFormulas borrador={borrador} setBorrador={setBorrador} />
     </div>
   );
 }
 
 function SeccionMedidas({ borrador, setBorrador }: PropsSeccion) {
   const lista = borrador.medidas;
+  const usados = idsUsados(borrador.calculo.formulas, lista);
   const cambiar = (i: number, cambio: Partial<Config["medidas"][number]>) =>
     setBorrador((b) => ({ ...b, medidas: b.medidas.map((m, j) => (j === i ? { ...m, ...cambio } : m)) }));
   const mover = (i: number, d: -1 | 1) =>
@@ -153,8 +156,8 @@ function SeccionMedidas({ borrador, setBorrador }: PropsSeccion) {
   return (
     <div className="sec">
       <p className="formula">
-        Cambia el nombre o la clave, marca si lleva ½ y acomoda el orden con las flechas. Las medidas marcadas con • las usa el
-        cálculo de tela y no se pueden quitar. Cambiar una clave no borra los valores ya capturados.
+        Cambia el nombre o la clave, marca si lleva ½ y acomoda el orden con las flechas. Las medidas marcadas con • las usan las
+        fórmulas de tela y no se pueden quitar (primero cámbialas en Tela y cálculo). Cambiar una clave no borra los valores ya capturados.
         {lista.length > 34 && " Con más de 34 medidas la tabla de la hoja se imprime en dos columnas."}
       </p>
       <div className="tabla-rep">
@@ -172,7 +175,7 @@ function SeccionMedidas({ borrador, setBorrador }: PropsSeccion) {
           </thead>
           <tbody>
             {lista.map((m, i) => {
-              const delCalculo = MEDIDAS_DEL_CALCULO.includes(m.id);
+              const delCalculo = usados.has(m.id);
               return (
                 <tr key={m.id}>
                   <td className="orden">

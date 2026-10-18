@@ -185,3 +185,20 @@ table.m tr:nth-child(even) td { background: #FDF6F9 }
   .hoja, .hoja * { -webkit-print-color-adjust: exact; print-color-adjust: exact }
   .hoja [contenteditable]:hover, .hoja [contenteditable]:focus { background: none }
 }
+
+/* Editor de fórmulas */
+.chips-prenda { display: flex; flex-wrap: wrap; gap: 6px }
+.chips-prenda button { font: 600 13px var(--f-body); border: 1px solid var(--rosa-claro); background: var(--panel); color: var(--rosa-osc); border-radius: 99px; padding: 6px 14px; cursor: pointer }
+.chips-prenda button[aria-selected="true"] { background: var(--rosa); border-color: var(--rosa); color: #fff }
+.cfg-formulas td { padding: 5px 6px; vertical-align: top }
+.cfg-formulas td:first-child input { min-width: 110px }
+.cfg-formulas td:nth-child(2), .cfg-formulas td:nth-child(3) { min-width: 220px }
+.cfg-formulas input:not([type]) { font-family: ui-monospace, Consolas, monospace; font-size: 13px; padding: 7px 8px }
+.cfg-formulas td:first-child input { font-family: var(--f-body) }
+.cfg-formulas input.mal { border-color: #C62828 }
+.cfg-formulas td.centro { text-align: center; vertical-align: middle }
+.cfg-formulas input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--rosa) }
+.res-formula, .err-formula { display: block; font-size: 11.5px; margin-top: 3px }
+.res-formula { color: var(--muted) }
+.err-formula, .tabla-rep td small.err-formula { color: #C62828; font-weight: 600 }
+.formula code { font-size: 11.5px; background: var(--rosa-tenue); padding: 0 4px; border-radius: 3px }

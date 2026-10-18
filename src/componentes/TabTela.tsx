@@ -35,7 +35,7 @@ export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
           Mangas
           <select
             value={t.manga}
-            disabled={!prendaLlevaManga(t.prenda)}
+            disabled={!prendaLlevaManga(t.prenda, cfg)}
             onChange={(e) => poner("manga", e.target.value as Manga)}
           >
             <option value="larga">Larga</option>
@@ -75,6 +75,14 @@ export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
             </span>
           ))}
           {consumo.renglones.length > 0 && `Subtotal ${consumo.totalCm.toFixed(0)} cm + ${t.merma}% de merma`}
+          {consumo.errores.length > 0 && (
+            <>
+              <br />
+              <b className="aviso">
+                Hay fórmulas con error (revísalas en Configuración): {consumo.errores.join(" · ")}
+              </b>
+            </>
+          )}
           {consumo.noCabe && (
             <>
               <br />
@@ -86,9 +94,9 @@ export function TabTela({ ficha, actualizar, consumo, lote }: Props) {
         </small>
       </div>
       <p className="formula">
-        Cómo se calcula: la tela se dobla a lo largo (ancho útil {consumo.anchoUtil.toFixed(0)} cm). Cada pieza es ¼ del contorno +{" "}
-        {cfg.holgura} cm de holgura + {cfg.costura} cm de costura; el largo suma dobladillo. Las piezas que caben
-        lado a lado comparten el mismo largo. Al final se suma la merma.
+        Cómo se calcula: la tela se dobla a lo largo (ancho útil {consumo.anchoUtil.toFixed(0)} cm). El ancho y el largo de cada
+        pieza salen de las fórmulas de Configuración (holgura {cfg.holgura} cm, costura {cfg.costura} cm). Las piezas que caben lado a
+        lado comparten el mismo largo. Al final se suma la merma.
       </p>
 
       <h3>¿Cuántas prendas salen del lote?</h3>

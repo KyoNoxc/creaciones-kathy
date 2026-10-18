@@ -1,5 +1,6 @@
 import type { Medidas } from "../datos/medidas";
-import { CONFIG_DEFAULT, type ConfigCalculo } from "./config";
+import { CONFIG_DEFAULT, type ConfigCalculo, type DefPieza } from "./config";
+import { ErrorFormula, calcularFormula } from "./formula";
 
 export type Prenda = "falda" | "blusa" | "pantalon" | "vestido";
 export type Manga = "larga" | "corta" | "sin";
@@ -11,10 +12,8 @@ export const PRENDAS: { valor: Prenda; etiqueta: string }[] = [
   { valor: "vestido", etiqueta: "Vestido" },
 ];
 
-export const prendaLlevaManga = (p: Prenda) => p === "blusa" || p === "vestido";
-
-/** Medidas (por su id) que usan las fórmulas; no se pueden borrar de la lista. */
-export const MEDIDAS_DEL_CALCULO = ["CCo", "TD", "CB", "CC", "CCad", "ACad", "LML", "LMC", "CBr", "LC", "LF", "LP"];
+/** La prenda lleva manga si alguna de sus piezas está marcada como manga. */
+export const prendaLlevaManga = (p: Prenda, cfg: ConfigCalculo = CONFIG_DEFAULT) => cfg.formulas[p].some((x) => x.esManga);
 
 export interface Pieza {
   nombre: string;
@@ -24,55 +23,58 @@ export interface Pieza {
   largo: number;
 }
 
-/** Piezas que lleva una prenda. Cada pieza se corta al doblez. */
-export function piezasDePrenda(
+/** Nombres que se pueden usar en las fórmulas además de las claves de las medidas. */
+export const PARAMETROS_FORMULA = [
+  { nombre: "holgura", descripcion: "holgura por media pieza" },
+  { nombre: "costura", descripcion: "costura por media pieza" },
+  { nombre: "dobladillo", descripcion: "dobladillo de la prenda" },
+  { nombre: "dobladilloManga", descripcion: "dobladillo de la manga" },
+  { nombre: "largoManga", descripcion: "LML si la manga es larga, LMC si es corta" },
+];
+
+/** Valores de holgura, costura, etc. para las fórmulas de una prenda. */
+export function parametrosFormula(prenda: Prenda, manga: Manga, M: Medidas, cfg: ConfigCalculo): Record<string, number> {
+  return {
+    holgura: cfg.holgura,
+    costura: cfg.costura,
+    dobladillo: cfg.dobladillo[prenda],
+    dobladilloManga: cfg.dobladillo.manga,
+    largoManga: (manga === "corta" ? M.LMC : M.LML) ?? 0,
+  };
+}
+
+export interface PiezasCalculadas {
+  piezas: Pieza[];
+  /** Errores de fórmulas, por pieza; esas piezas no entran al cálculo. */
+  errores: string[];
+}
+
+/**
+ * Piezas que lleva una prenda, calculadas con las fórmulas de Configuración.
+ * M trae las medidas por su id (y, si se quiere, también por su clave visible).
+ */
+export function piezasConErrores(
   prenda: Prenda,
   manga: Manga,
   M: Medidas,
   cfg: ConfigCalculo = CONFIG_DEFAULT,
-): Pieza[] {
-  const v = (k: string) => M[k] ?? 0;
-  // Media pieza: ¼ del contorno + holgura + costura
-  const media = (contorno: number) => contorno / 4 + cfg.holgura + cfg.costura;
-  const P: Pieza[] = [];
-  const d = cfg.dobladillo;
-  const mangas = () => {
-    if (manga === "sin") return;
-    const largo = manga === "larga" ? v("LML") : v("LMC");
-    P.push({ nombre: "Manga", ancho: (v("CBr") + 6) / 2 + cfg.costura, largo: largo + d.manga });
-  };
-  const pretina = () => P.push({ nombre: "Pretina", ancho: 8, largo: v("CC") / 2 + 5 });
-
-  switch (prenda) {
-    case "falda":
-      P.push({ nombre: "Delantero", ancho: media(v("CCad")), largo: v("LF") + d.falda });
-      P.push({ nombre: "Trasero", ancho: media(v("CCad")), largo: v("LF") + d.falda });
-      pretina();
-      break;
-    case "blusa": {
-      const c = Math.max(v("CB"), v("CCad"));
-      P.push({ nombre: "Delantero", ancho: media(c), largo: v("LC") + d.blusa });
-      P.push({ nombre: "Trasero", ancho: media(c), largo: v("LC") + d.blusa });
-      mangas();
-      P.push({ nombre: "Cuello/vistas", ancho: 12, largo: v("CCo") / 2 + 6 });
-      break;
-    }
-    case "vestido": {
-      const c = Math.max(v("CB"), v("CCad")) + 4;
-      const largo = v("TD") + (v("LF") - v("ACad")) + d.vestido;
-      P.push({ nombre: "Delantero", ancho: media(c), largo });
-      P.push({ nombre: "Trasero", ancho: media(c), largo });
-      mangas();
-      break;
-    }
-    case "pantalon": {
-      // ¼ de cadera + 6 de tiro + costura
-      const ancho = v("CCad") / 4 + 6 + cfg.costura;
-      P.push({ nombre: "Delantero", ancho, largo: v("LP") + d.pantalon });
-      P.push({ nombre: "Trasero", ancho: ancho + 3, largo: v("LP") + d.pantalon });
-      pretina();
-      break;
+): PiezasCalculadas {
+  const vars = { ...M, ...parametrosFormula(prenda, manga, M, cfg) };
+  const piezas: Pieza[] = [];
+  const errores: string[] = [];
+  for (const d of cfg.formulas[prenda]) {
+    if (d.esManga && manga === "sin") continue;
+    try {
+      piezas.push({ nombre: d.nombre, ancho: calcularFormula(d.ancho, vars), largo: calcularFormula(d.largo, vars) });
+    } catch (e) {
+      errores.push(`${d.nombre}: ${e instanceof ErrorFormula ? e.message : "fórmula con error"}`);
     }
   }
-  return P;
+  return { piezas, errores };
 }
+
+export function piezasDePrenda(prenda: Prenda, manga: Manga, M: Medidas, cfg: ConfigCalculo = CONFIG_DEFAULT): Pieza[] {
+  return piezasConErrores(prenda, manga, M, cfg).piezas;
+}
+
+export type { DefPieza };

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { consumoDeTela, prendasPorLote, redondear2, type Consumo } from "./calculo";
-import type { ConfigCalculo } from "./calculo/config";
-import { configInicial, type Configuracion } from "./datos/configuracion";
+import { configInicial, medidasParaFormulas, type Configuracion } from "./datos/configuracion";
 import { ContextoConfig } from "./datos/contexto";
 import { guardarFicha, leerConfig } from "./datos/db";
 import { Configuracion as PantallaConfig } from "./componentes/Configuracion";
@@ -30,15 +29,15 @@ export type Actualizar = (cambio: (f: Ficha) => Ficha) => void;
 const hayMedidas = (M: Medidas) => Object.values(M).some((v) => v > 0);
 
 /** Sin medidas capturadas no se calcula consumo (si no, saldrían solo la pretina o el cuello). */
-function calcularConsumo(f: Ficha["tela"], M: Medidas, cfg: ConfigCalculo): Consumo {
-  const c = consumoDeTela(f.prenda, f.manga, M, f.ancho, f.merma, cfg);
-  return hayMedidas(M) ? c : { ...c, renglones: [], totalCm: 0, metros: 0, noCabe: false };
+function calcularConsumo(f: Ficha["tela"], M: Medidas, config: Configuracion): Consumo {
+  const c = consumoDeTela(f.prenda, f.manga, medidasParaFormulas(M, config.medidas), f.ancho, f.merma, config.calculo);
+  return hayMedidas(M) ? c : { ...c, renglones: [], totalCm: 0, metros: 0, noCabe: false, errores: [] };
 }
 
 /** El consumo calculado se anota solo en la tela elegida (como en el prototipo). */
 function conConsumoCfg(f: Ficha, config: Configuracion): Ficha {
   const M = medidasEfectivas(f.tipoMedida, f.medidas, config.tallas);
-  const m = redondear2(calcularConsumo(f.tela, M, config.calculo).metros);
+  const m = redondear2(calcularConsumo(f.tela, M, config).metros);
   return f.telas[f.tela.tela] === m ? f : { ...f, telas: { ...f.telas, [f.tela.tela]: m } };
 }
 
@@ -89,8 +88,8 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
 
   const medidas = medidasEfectivas(ficha.tipoMedida, ficha.medidas, config.tallas);
   const consumo = useMemo(
-    () => calcularConsumo(ficha.tela, medidas, config.calculo),
-    [ficha.tela, medidas, config.calculo],
+    () => calcularConsumo(ficha.tela, medidas, config),
+    [ficha.tela, medidas, config],
   );
   const lote = prendasPorLote(ficha.tela.rollos, ficha.tela.metrosRollo, consumo.metros);
 

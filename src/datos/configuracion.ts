@@ -1,5 +1,6 @@
-import { CONFIG_DEFAULT, type ConfigCalculo } from "../calculo/config";
-import { MEDIDAS_DEL_CALCULO } from "../calculo/piezas";
+import { CONFIG_DEFAULT, FORMULAS_INICIALES, type ConfigCalculo, type DefPieza, type FormulasPrendas } from "../calculo/config";
+import { revisarFormula, variablesDeFormula } from "../calculo/formula";
+import { PARAMETROS_FORMULA } from "../calculo/piezas";
 import { MEDIDAS, type DefMedida } from "./medidas";
 import { TALLAS, TALLAS_INDUSTRIALES, type TablaTallas } from "./tallas";
 
@@ -39,6 +40,7 @@ export function normalizarConfig(x: unknown): Configuracion {
       vestido: numero(d.vestido, base.calculo.dobladillo.vestido),
       manga: numero(d.manga, base.calculo.dobladillo.manga),
     },
+    formulas: normalizarFormulas(c.formulas),
   };
 
   let medidas = Array.isArray(x.medidas)
@@ -46,8 +48,8 @@ export function normalizarConfig(x: unknown): Configuracion {
         .filter((m): m is Record<string, unknown> => esObjeto(m) && typeof m.id === "string" && !!m.id)
         .map((m) => ({ id: m.id as string, clave: String(m.clave ?? m.id), nombre: String(m.nombre ?? ""), mitad: !!m.mitad }))
     : base.medidas;
-  // Las medidas que usan las fórmulas no pueden faltar.
-  for (const id of MEDIDAS_DEL_CALCULO) {
+  // Las medidas originales que usan las fórmulas no pueden faltar.
+  for (const id of idsUsados(calculo.formulas, base.medidas)) {
     if (!medidas.some((m) => m.id === id)) medidas = [...medidas, base.medidas.find((m) => m.id === id)!];
   }
 
@@ -75,7 +77,64 @@ export function validarConfig(c: Configuracion): string[] {
   }
   if (c.calculo.anchoTela <= 2 * c.calculo.orillo) errores.push("El ancho de tela es demasiado chico.");
   if (c.calculo.merma < 0) errores.push("La merma no puede ser negativa.");
+  const validos = nombresParaFormulas(c.medidas);
+  for (const [prenda, piezas] of Object.entries(c.calculo.formulas)) {
+    for (const p of piezas) {
+      if (!p.nombre.trim()) errores.push(`Hay una pieza sin nombre en ${prenda}.`);
+      for (const campo of ["ancho", "largo"] as const) {
+        const e = revisarFormula(p[campo], validos);
+        if (e) errores.push(`${prenda} · ${p.nombre || "pieza"} · ${campo}: ${e}`);
+      }
+    }
+  }
   return errores;
 }
 
 export const nuevoIdMedida = () => `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+const PRENDAS_FORMULA = Object.keys(FORMULAS_INICIALES) as (keyof FormulasPrendas)[];
+
+function normalizarFormulas(x: unknown): FormulasPrendas {
+  const f = esObjeto(x) ? x : {};
+  return Object.fromEntries(
+    PRENDAS_FORMULA.map((p) => {
+      const lista = Array.isArray(f[p])
+        ? (f[p] as unknown[])
+            .filter(esObjeto)
+            .map((d): DefPieza => ({
+              nombre: String(d.nombre ?? ""),
+              ancho: String(d.ancho ?? "0"),
+              largo: String(d.largo ?? "0"),
+              ...(d.esManga ? { esManga: true } : {}),
+            }))
+        : structuredClone(FORMULAS_INICIALES[p]);
+      return [p, lista];
+    }),
+  ) as FormulasPrendas;
+}
+
+/** Todo lo que se puede escribir en una fórmula: ids y claves de medidas y los parámetros. */
+export function nombresParaFormulas(medidas: DefMedida[]): Set<string> {
+  return new Set([...medidas.flatMap((m) => [m.id, m.clave.trim()]), ...PARAMETROS_FORMULA.map((p) => p.nombre)]);
+}
+
+/** Ids de las medidas que usan las fórmulas (escritas por id o por clave). */
+export function idsUsados(formulas: FormulasPrendas, medidas: DefMedida[]): Set<string> {
+  const usados = new Set(
+    Object.values(formulas).flatMap((ps) => ps.flatMap((p) => [...variablesDeFormula(p.ancho), ...variablesDeFormula(p.largo)])),
+  );
+  // largoManga usa LML y LMC
+  if (usados.has("largoManga")) (usados.add("LML"), usados.add("LMC"));
+  return new Set(medidas.filter((m) => usados.has(m.id) || usados.has(m.clave.trim())).map((m) => m.id));
+}
+
+/** Medidas por id y también por su clave visible, para calcular las fórmulas. */
+export function medidasParaFormulas(M: Record<string, number>, medidas: DefMedida[]): Record<string, number> {
+  const r = { ...M };
+  for (const m of medidas) {
+    r[m.id] = M[m.id] ?? 0;
+    const clave = m.clave.trim();
+    if (clave && !(clave in r)) r[clave] = r[m.id];
+  }
+  return r;
+}
