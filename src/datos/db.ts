@@ -2,16 +2,41 @@ import Dexie, { type Table } from "dexie";
 import { normalizarConfig, type Configuracion } from "./configuracion";
 import { nuevoUid, hoy, normalizarFicha, type Ficha } from "./ficha";
 
-// Las fichas viven en el navegador (IndexedDB). No hay servidor: el respaldo JSON es la copia de seguridad.
+// Las fichas viven en el navegador (IndexedDB), así la app funciona sin internet.
+// Si hay sesión en la nube (src/nube), cada cambio local se sube y los de otros dispositivos se bajan aquí.
 class BaseKathy extends Dexie {
   fichas!: Table<Ficha, string>;
-  ajustes!: Table<{ id: string; valor: unknown }, string>;
+  ajustes!: Table<{ id: string; valor: unknown; actualizada?: string }, string>;
   constructor(nombre = "creaciones-kathy") {
     super(nombre);
     this.version(1).stores({ fichas: "uid, folio, nombre, actualizada" });
     this.version(2).stores({ ajustes: "id" });
   }
 }
+
+// ===== Avisos de cambios (para la sincronización y para refrescar pantallas) =====
+
+/** Cambios hechos en este dispositivo, que hay que subir a la nube. */
+export type CambioLocal =
+  | { tipo: "ficha"; ficha: Ficha }
+  | { tipo: "borrada"; uid: string; actualizada: string }
+  | { tipo: "config"; config: Configuracion; actualizada: string };
+
+const oyentesLocales = new Set<(c: CambioLocal) => void>();
+export function alCambiarLocal(f: (c: CambioLocal) => void): () => void {
+  oyentesLocales.add(f);
+  return () => oyentesLocales.delete(f);
+}
+const avisarLocal = (c: CambioLocal) => oyentesLocales.forEach((f) => f(c));
+
+/** Llegaron cambios de otro dispositivo. */
+export type CambioRemoto = { tipo: "fichas"; uids: string[] } | { tipo: "config" };
+const oyentesRemotos = new Set<(c: CambioRemoto) => void>();
+export function alCambiarRemoto(f: (c: CambioRemoto) => void): () => void {
+  oyentesRemotos.add(f);
+  return () => oyentesRemotos.delete(f);
+}
+export const avisarRemoto = (c: CambioRemoto) => oyentesRemotos.forEach((f) => f(c));
 
 // ===== Configuración =====
 
@@ -20,8 +45,15 @@ export async function leerConfig(): Promise<Configuracion> {
   return normalizarConfig(fila?.valor);
 }
 
+/** Fecha de la última vez que se guardó la configuración ("" si nunca). */
+export async function fechaConfig(): Promise<string> {
+  return (await db.ajustes.get("config"))?.actualizada ?? "";
+}
+
 export async function guardarConfig(c: Configuracion): Promise<void> {
-  await db.ajustes.put({ id: "config", valor: c });
+  const actualizada = new Date().toISOString();
+  await db.ajustes.put({ id: "config", valor: c, actualizada });
+  avisarLocal({ tipo: "config", config: c, actualizada });
 }
 
 export let db = new BaseKathy();
@@ -53,11 +85,27 @@ export async function guardarFicha(f: Ficha): Promise<Ficha> {
     actualizada: ahora,
   };
   await db.fichas.put(lista);
+  avisarLocal({ tipo: "ficha", ficha: lista });
   return lista;
 }
 
 export async function borrarFicha(uid: string): Promise<void> {
   await db.fichas.delete(uid);
+  avisarLocal({ tipo: "borrada", uid, actualizada: new Date().toISOString() });
+}
+
+// ===== Escrituras que vienen de la nube (no se vuelven a subir) =====
+
+export const obtenerFicha = (uid: string) => db.fichas.get(uid);
+export const todasLasFichas = () => db.fichas.toArray();
+export async function escribirFichaRemota(f: Ficha) {
+  await db.fichas.put(f);
+}
+export async function borrarFichaRemota(uid: string) {
+  await db.fichas.delete(uid);
+}
+export async function escribirConfigRemota(valor: unknown, actualizada: string) {
+  await db.ajustes.put({ id: "config", valor: normalizarConfig(valor), actualizada });
 }
 
 /** Copia de una ficha con folio nuevo y fecha de hoy; las fechas de prueba y entrega quedan vacías. */
@@ -127,6 +175,7 @@ export interface ResultadoImportacion {
 export async function importarRespaldo(texto: string, conConfig = false): Promise<ResultadoImportacion> {
   const { fichas: lista, configuracion } = leerRespaldo(texto);
   const r: ResultadoImportacion = { nuevas: 0, actualizadas: 0, sinCambio: 0, invalidas: 0, config: false };
+  const cambiadas: Ficha[] = [];
   await db.transaction("rw", db.fichas, db.ajustes, async () => {
     if (conConfig && configuracion) {
       await guardarConfig(normalizarConfig(configuracion));
@@ -141,15 +190,19 @@ export async function importarRespaldo(texto: string, conConfig = false): Promis
       }
       const actual = await db.fichas.get(f.uid);
       if (!actual) {
-        await db.fichas.put({ ...f, folio: f.folio || ++folio });
+        const nueva = { ...f, folio: f.folio || ++folio };
+        await db.fichas.put(nueva);
+        cambiadas.push(nueva);
         r.nuevas++;
       } else if (f.actualizada > actual.actualizada) {
         await db.fichas.put(f);
+        cambiadas.push(f);
         r.actualizadas++;
       } else {
         r.sinCambio++;
       }
     }
   });
+  cambiadas.forEach((ficha) => avisarLocal({ tipo: "ficha", ficha }));
   return r;
 }

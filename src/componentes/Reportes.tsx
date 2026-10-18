@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Configuracion } from "../datos/configuracion";
 import {
+  alCambiarRemoto,
   borrarFicha,
   crearRespaldo,
   duplicarFicha,
@@ -37,6 +38,10 @@ export function Reportes({ abierta, onAbrir, onImprimir, onBorrada, onAviso, onC
       .catch(() => setError("No se pudieron leer las fichas guardadas en este navegador."));
   useEffect(() => {
     recargar();
+    // Fichas nuevas o cambiadas en otro dispositivo
+    return alCambiarRemoto((c) => {
+      if (c.tipo === "fichas") recargar();
+    });
   }, []);
 
   const visibles = fichas ? filtrarFichas(fichas, busca) : [];

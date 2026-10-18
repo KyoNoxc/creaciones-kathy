@@ -7,7 +7,7 @@ Estados: 🟡 pendiente · 🔵 en proceso · ✅ hecho · ⏸️ en espera de r
 
 | Fecha | Pedido o comentario | Estado | Notas |
 |---|---|---|---|
-| 2026-10-18 | "Haz que la app funcione en cualquier dispositivo ya sea computadora, laptop, tablet, celular y que todo se guarde por si se agregan fichas o reportes nuevos aparezcan actualizados en todos los dispositivos" (en GitHub Pages si es necesario) | ⏸️ | Propuesto: GitHub Pages + Firebase. Esperando cuentas de GitHub y Firebase |
+| 2026-10-18 | "Haz que la app funcione en cualquier dispositivo ya sea computadora, laptop, tablet, celular y que todo se guarde por si se agregan fichas o reportes nuevos aparezcan actualizados en todos los dispositivos" (en GitHub Pages si es necesario) | 🔵 | Aprobado Firebase. Código listo (sincronización, sesión, GitHub Pages). Falta: firebaseConfig y repositorio de GitHub |
 | 2026-10-18 | "En la parte de tela y cálculo agrega que se pueda cambiar las fórmulas que usan algunas medidas para sacar el total como 1/2 y así, para poderlas modificar fácilmente desde la app" | ✅ | Configuración → Tela y cálculo → Fórmulas de las piezas. Las fórmulas iniciales son las mismas de antes (los resultados no cambian) |
 | 2026-10-17 | En Medidas, desplegable con A medida (primera opción), T-CH, T-M, T-G, T-XL, T-XXL. Las tallas traen medidas industriales fijas que no se cambian | ✅ | En el prototipo. Valores de tallas provisionales hasta tener la tabla de Kathy |
 | 2026-10-17 | Poner el logo original en buena calidad | ✅ | Recortado al círculo, arriba a la izquierda |

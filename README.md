@@ -17,6 +17,10 @@ Ya instalada **funciona sin internet y sin la terminal**: la primera vez guarda 
 
 Importante: las fichas se guardan por dirección. Las de `localhost:4173` (la app) y las de `localhost:5173` (`npm run dev`) son bases distintas. Para pasar fichas de una a otra usa **Descargar respaldo** e **Importar respaldo** en Reportes.
 
+## Publicar y sincronizar entre dispositivos
+
+Ver [docs/CONFIGURAR_NUBE.md](docs/CONFIGURAR_NUBE.md): GitHub Pages para publicar la app y Firebase para que las fichas, reportes y configuración aparezcan en todos los dispositivos. Mientras `src/nube/config.ts` tenga `null`, la app funciona solo en el dispositivo.
+
 ## Desarrollo
 
 ```
@@ -32,6 +36,7 @@ Para imprimir: botón **Imprimir** arriba de la vista previa. En el diálogo del
 - `src/calculo/` fórmulas de tela (piezas, acomodo, consumo, lote) y sus pruebas.
 - `src/datos/` lista de medidas, tallas industriales, configuración, la ficha y la base de datos (`db.ts`: guardar, buscar, duplicar, borrar, respaldo).
 - `src/componentes/` pestañas del formulario, la hoja carta editable, Reportes y Configuración.
+- `src/nube/` sincronización con Firebase (sesión, subir y bajar cambios; gana el último guardado).
 - `public/` íconos de la app (hechos a partir de `assets/logo.png`).
 - Las fuentes (Barlow Condensed, Nunito Sans, Great Vibes) vienen de los paquetes `@fontsource/*` y se empacan dentro de la app.
 

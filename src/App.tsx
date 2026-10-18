@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { consumoDeTela, prendasPorLote, redondear2, type Consumo } from "./calculo";
 import { configInicial, medidasParaFormulas, type Configuracion } from "./datos/configuracion";
 import { ContextoConfig } from "./datos/contexto";
-import { guardarFicha, leerConfig } from "./datos/db";
+import { alCambiarRemoto, guardarFicha, leerConfig, obtenerFicha } from "./datos/db";
+import { Cuenta } from "./componentes/Cuenta";
+import { obtenerNube } from "./nube";
 import { Configuracion as PantallaConfig } from "./componentes/Configuracion";
 import { fichaNueva, type Ficha } from "./datos/ficha";
 import type { Medidas } from "./datos/medidas";
@@ -49,12 +51,17 @@ export default function App() {
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
+    obtenerNube(); // si hay nube configurada, empieza a sincronizar
+    const quitar = alCambiarRemoto((c) => {
+      if (c.tipo === "config") leerConfig().then(setConfig);
+    });
     leerConfig()
       .then(setConfig)
       .catch(() => {
         setError(true);
         setConfig(configInicial());
       });
+    return quitar;
   }, []);
   if (!config) return <p className="vacio">Cargando…</p>;
   return (
@@ -93,6 +100,18 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
   );
   const lote = prendasPorLote(ficha.tela.rollos, ficha.tela.metrosRollo, consumo.metros);
 
+  // Si otro dispositivo cambió la ficha abierta y aquí no hay cambios sin guardar, se muestra la versión nueva.
+  useEffect(
+    () =>
+      alCambiarRemoto(async (c) => {
+        if (c.tipo !== "fichas" || !c.uids.includes(ficha.uid) || sinGuardar) return;
+        const nueva = await obtenerFicha(ficha.uid);
+        if (nueva) abrirSinCambiarVista(nueva);
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ficha.uid, sinGuardar],
+  );
+
   // Avisar antes de cerrar la pestaña con cambios sin guardar.
   useEffect(() => {
     if (!sinGuardar && !configSinGuardar) return;
@@ -114,10 +133,14 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
     return () => clearTimeout(t);
   }, [aviso]);
 
-  function abrir(f: Ficha) {
+  function abrirSinCambiarVista(f: Ficha) {
     const lista = conConsumo(f);
     setFicha(lista);
     setReferencia(huella(lista));
+  }
+
+  function abrir(f: Ficha) {
+    abrirSinCambiarVista(f);
     setPestana("clienta");
     setVista("ficha");
   }
@@ -153,6 +176,8 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
         <h1>
           Creaciones Kathy <span>reportes de taller</span>
         </h1>
+        <div className="cabecera-der">
+        <Cuenta />
         <nav className="vistas" aria-label="Secciones">
           <button aria-current={vista === "ficha"} onClick={() => irA("ficha")}>
             Ficha{sinGuardar && <span className="punto" title="Sin guardar" />}
@@ -164,6 +189,7 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
             Configuración
           </button>
         </nav>
+        </div>
       </header>
 
       {aviso && (

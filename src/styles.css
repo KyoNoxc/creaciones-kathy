@@ -202,3 +202,17 @@ table.m tr:nth-child(even) td { background: #FDF6F9 }
 .res-formula { color: var(--muted) }
 .err-formula, .tabla-rep td small.err-formula { color: #C62828; font-weight: 600 }
 .formula code { font-size: 11.5px; background: var(--rosa-tenue); padding: 0 4px; border-radius: 3px }
+
+/* Cuenta en la nube */
+.cuenta-nube { position: relative }
+.chip-nube { display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px var(--f-body); background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 99px; padding: 7px 13px; cursor: pointer }
+.punto-nube { width: 8px; height: 8px; border-radius: 50%; background: var(--muted) }
+.chip-nube.al-dia .punto-nube { background: var(--ok) }
+.chip-nube.pendiente .punto-nube, .chip-nube.conectando .punto-nube { background: var(--warn) }
+.chip-nube.sin-conexion .punto-nube { background: var(--muted) }
+.chip-nube.mal .punto-nube { background: #C62828 }
+.chip-nube.sin-sesion { background: var(--rosa); color: #fff; border-color: var(--rosa) }
+.chip-nube.sin-sesion .punto-nube { background: #fff }
+.panel-nube { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(340px, calc(100vw - 32px)); padding: 16px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, .18) }
+.panel-nube p { margin: 0 }
+.cabecera-der { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
