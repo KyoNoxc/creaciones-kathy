@@ -225,3 +225,7 @@ table.m tr:nth-child(even) td { background: #FDF6F9 }
 .entrar h1 span { font: 400 28px var(--f-script); text-transform: none; letter-spacing: 0; color: var(--rosa) }
 .form-entrar { display: grid; gap: 12px; width: 100%; text-align: left }
 .form-entrar .btn { padding: 11px 20px; font-size: 15px }
+.con-ojo { position: relative; display: block }
+.con-ojo input { padding-right: 44px }
+.ojo { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 34px; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; color: var(--muted); cursor: pointer }
+.ojo:hover { color: var(--rosa-osc); background: var(--rosa-tenue) }

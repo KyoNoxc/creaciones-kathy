@@ -74,7 +74,7 @@ Método: la tela se dobla a lo largo; ancho útil = ancho/2 − 1 cm de orillo. 
 - Colores del logo: rosa fuerte `#D23A72`, rosa oscuro `#A8245A`, rosa claro `#F7DCE6`, fondo rosado `#FBF5F7`, texto `#3A2A31`.
 - Fuentes: Barlow Condensed (títulos), Nunito Sans (texto), Great Vibes (solo la frase). Van dentro del proyecto con los paquetes `@fontsource/*` (juego latino), importadas en `src/main.tsx`.
 - Encabezado del reporte: logo, "CREACIONES KATHY" y debajo la frase **"Diseños exclusivos"**; a la derecha la etiqueta del tipo de ficha (DAMA, etc.).
-- Hoja: datos de clienta en un renglón; dos columnas (medidas | consumo, insumos, telas, entretela, mostrario de telas); abajo observaciones y pie con folio y fecha.
+- Hoja: datos de clienta en un renglón; dos columnas (medidas | consumo, insumos, telas, entretela, mostrario de telas); abajo observaciones y pie con "Creaciones Kathy" (sin ciudad, pedido 2026-10-18), folio y fecha.
 - Impresión: todo en una página, sin reverso. Con 30 medidas todavía cabe; si se agregan muchas más, pasar la tabla de medidas a dos columnas. El recuadro del mostrario queda vacío para engrapar muestras.
 
 ## Pendiente de confirmar con Kathy
