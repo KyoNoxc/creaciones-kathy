@@ -2,14 +2,15 @@ rules_version = '2';
 
 // Reglas de seguridad de Firestore para Creaciones Kathy.
 // Solo las cuentas de esta lista pueden leer y escribir fichas y configuración.
-// Cópialas en Firebase → Firestore Database → Reglas y cambia los correos.
+// Publicadas en Firebase → Firestore Database → Reglas (proyecto creaciones-kathy-fef6a).
+// Si se agrega un correo aquí, hay que volver a publicarlas allá.
 service cloud.firestore {
   match /databases/{database}/documents {
     function delTaller() {
       return request.auth != null
         && request.auth.token.email in [
-          'CORREO_DE_KATHY@ejemplo.com',
-          'TU_CORREO@ejemplo.com'
+          'kyomarqz.garcia@gmail.com'
+          // Falta agregar el correo de Kathy: 'CORREO_DE_KATHY',
         ];
     }
 
