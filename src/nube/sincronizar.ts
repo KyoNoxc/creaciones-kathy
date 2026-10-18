@@ -36,6 +36,8 @@ export interface EstadoNube {
   estado: Estado;
   /** Correo de la cuenta con sesión abierta. */
   correo: string | null;
+  /** Ya se sabe si hay sesión (Firebase la recuerda, también sin internet). */
+  listo: boolean;
   error?: string;
 }
 
@@ -67,7 +69,7 @@ export function crearNube(opciones: FirebaseOptions): Nube {
     ignoreUndefinedProperties: true,
   });
 
-  let estado: EstadoNube = { estado: "conectando", correo: null };
+  let estado: EstadoNube = { estado: "conectando", correo: null, listo: false };
   const oyentes = new Set<(e: EstadoNube) => void>();
   const poner = (e: Partial<EstadoNube>) => {
     estado = { ...estado, ...e };
@@ -176,7 +178,7 @@ export function crearNube(opciones: FirebaseOptions): Nube {
   onAuthStateChanged(auth, (usuario: User | null) => {
     detener?.();
     detener = null;
-    poner({ correo: usuario?.email ?? null, estado: usuario ? "conectando" : "sin-sesion", error: undefined });
+    poner({ correo: usuario?.email ?? null, estado: usuario ? "conectando" : "sin-sesion", error: undefined, listo: true });
     if (usuario) arrancar();
   });
 

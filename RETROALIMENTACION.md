@@ -7,6 +7,7 @@ Estados: 🟡 pendiente · 🔵 en proceso · ✅ hecho · ⏸️ en espera de r
 
 | Fecha | Pedido o comentario | Estado | Notas |
 |---|---|---|---|
+| 2026-10-18 | "Por más seguridad tener el login de inicio de sesión antes de mostrar todo, primero iniciar sesión y luego ya entrar a la app completa" | ✅ | Pantalla de entrada; sin sesión no se ve nada. Firebase recuerda la sesión, también sin internet |
 | 2026-10-18 | "Haz que la app funcione en cualquier dispositivo ya sea computadora, laptop, tablet, celular y que todo se guarde por si se agregan fichas o reportes nuevos aparezcan actualizados en todos los dispositivos" (en GitHub Pages si es necesario) | 🔵 | Publicada en https://kyonoxc.github.io/creaciones-kathy/ con Firebase. Falta: correo y cuenta de Kathy, y probar la sincronización entre dos dispositivos |
 | 2026-10-18 | "En la parte de tela y cálculo agrega que se pueda cambiar las fórmulas que usan algunas medidas para sacar el total como 1/2 y así, para poderlas modificar fácilmente desde la app" | ✅ | Configuración → Tela y cálculo → Fórmulas de las piezas. Las fórmulas iniciales son las mismas de antes (los resultados no cambian) |
 | 2026-10-17 | En Medidas, desplegable con A medida (primera opción), T-CH, T-M, T-G, T-XL, T-XXL. Las tallas traen medidas industriales fijas que no se cambian | ✅ | En el prototipo. Valores de tallas provisionales hasta tener la tabla de Kathy |

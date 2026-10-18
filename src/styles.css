@@ -216,3 +216,12 @@ table.m tr:nth-child(even) td { background: #FDF6F9 }
 .panel-nube { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(340px, calc(100vw - 32px)); padding: 16px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, .18) }
 .panel-nube p { margin: 0 }
 .cabecera-der { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+
+/* Pantalla de entrada */
+.entrar { min-height: calc(100vh - 56px); display: grid; place-items: center }
+.entrar-caja { width: min(400px, 100%); padding: 28px 24px; display: grid; gap: 14px; justify-items: center; text-align: center }
+.entrar-logo { width: 150px; height: auto; border-radius: 12px }
+.entrar h1 { margin: 0; font: 700 26px var(--f-display); letter-spacing: .05em; text-transform: uppercase; color: var(--rosa-osc); display: grid; line-height: 1.1 }
+.entrar h1 span { font: 400 28px var(--f-script); text-transform: none; letter-spacing: 0; color: var(--rosa) }
+.form-entrar { display: grid; gap: 12px; width: 100%; text-align: left }
+.form-entrar .btn { padding: 11px 20px; font-size: 15px }

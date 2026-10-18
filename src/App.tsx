@@ -3,8 +3,9 @@ import { consumoDeTela, prendasPorLote, redondear2, type Consumo } from "./calcu
 import { configInicial, medidasParaFormulas, type Configuracion } from "./datos/configuracion";
 import { ContextoConfig } from "./datos/contexto";
 import { alCambiarRemoto, guardarFicha, leerConfig, obtenerFicha } from "./datos/db";
-import { Cuenta } from "./componentes/Cuenta";
-import { obtenerNube } from "./nube";
+import { Cuenta, PantallaEntrar, useNube } from "./componentes/Cuenta";
+import { hayNube } from "./nube";
+import type { EstadoNube, Nube } from "./nube/sincronizar";
 import { Configuracion as PantallaConfig } from "./componentes/Configuracion";
 import { fichaNueva, type Ficha } from "./datos/ficha";
 import type { Medidas } from "./datos/medidas";
@@ -48,10 +49,11 @@ const SIN_GUARDAR = "Hay cambios sin guardar en la ficha abierta. ¿Quieres desc
 
 /** Carga la configuración guardada antes de mostrar la app. */
 export default function App() {
+  // Con la nube configurada, primero se inicia sesión y después se ve la app.
+  const { nube, e } = useNube();
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
-    obtenerNube(); // si hay nube configurada, empieza a sincronizar
     const quitar = alCambiarRemoto((c) => {
       if (c.tipo === "config") leerConfig().then(setConfig);
     });
@@ -63,16 +65,24 @@ export default function App() {
       });
     return quitar;
   }, []);
+  if (hayNube && !e?.correo) return <PantallaEntrar nube={e?.listo ? nube : null} e={e} />;
   if (!config) return <p className="vacio">Cargando…</p>;
   return (
     <ContextoConfig.Provider value={config}>
       {error && <p className="error">No se pudo leer la configuración guardada; se usan los valores iniciales.</p>}
-      <Taller config={config} onConfig={setConfig} />
+      <Taller key={e?.correo ?? ""} config={config} onConfig={setConfig} nube={nube} e={e} />
     </ContextoConfig.Provider>
   );
 }
 
-function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Configuracion) => void }) {
+interface PropsTaller {
+  config: Configuracion;
+  onConfig: (c: Configuracion) => void;
+  nube: Nube | null;
+  e: EstadoNube | null;
+}
+
+function Taller({ config, onConfig, nube, e }: PropsTaller) {
   const conConsumo = (f: Ficha) => conConsumoCfg(f, config);
   const [ficha, setFicha] = useState<Ficha>(() => conConsumo(fichaNueva(config.calculo)));
   // Cómo estaba la ficha al abrirla o guardarla; si cambia, hay algo sin guardar.
@@ -177,7 +187,7 @@ function Taller({ config, onConfig }: { config: Configuracion; onConfig: (c: Con
           Creaciones Kathy <span>reportes de taller</span>
         </h1>
         <div className="cabecera-der">
-        <Cuenta />
+        <Cuenta nube={nube} e={e} />
         <nav className="vistas" aria-label="Secciones">
           <button aria-current={vista === "ficha"} onClick={() => irA("ficha")}>
             Ficha{sinGuardar && <span className="punto" title="Sin guardar" />}
