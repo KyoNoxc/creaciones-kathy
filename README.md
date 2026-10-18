@@ -1,5 +1,7 @@
 # Creaciones Kathy · App de reportes de taller
 
+**App publicada:** https://kyonoxc.github.io/creaciones-kathy/ (se instala desde ahí en computadora, tablet o celular).
+
 Ver `CLAUDE.md` (qué hace la app y cómo se construye) y `RETROALIMENTACION.md` (pedidos de Kathy).
 
 ## Usar la app (versión instalable)

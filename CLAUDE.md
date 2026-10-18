@@ -18,7 +18,7 @@ Referencias en `referencia/`:
 ## Tecnología
 - React + Vite + TypeScript.
 - Datos guardados en el navegador con IndexedDB (usar Dexie), que sigue siendo la base que usa la app.
-- Sincronización entre dispositivos con Firebase (Auth correo/contraseña + Firestore con caché sin internet), en `src/nube/`. Firestore: `fichas/{uid}` (borradas quedan como `{borrada: true}`) y `ajustes/config`. Gana la versión con `actualizada` más reciente. Reglas en `firestore.rules` (lista de correos permitidos). Publicación en GitHub Pages con `.github/workflows/deploy.yml`. Pasos para el usuario en `docs/CONFIGURAR_NUBE.md`.
+- Sincronización entre dispositivos con Firebase (Auth correo/contraseña + Firestore con caché sin internet), en `src/nube/`. Firestore: `fichas/{uid}` (borradas quedan como `{borrada: true}`) y `ajustes/config`. Gana la versión con `actualizada` más reciente. Reglas en `firestore.rules` (lista de correos permitidos). Publicación en GitHub Pages con `.github/workflows/deploy.yml`. Pasos para el usuario en `docs/CONFIGURAR_NUBE.md`. Publicada en https://kyonoxc.github.io/creaciones-kathy/ (repo KyoNoxc/creaciones-kathy; cada push a main se publica solo). Firebase: proyecto `creaciones-kathy-fef6a`.
 - Que se pueda instalar como app (PWA) y funcione sin internet.
 - Impresión con `window.print()` y CSS `@media print` + `@page { size: letter; margin: 0 }`.
 - Botón para exportar y respaldar los datos en un archivo JSON, y para importarlo.
